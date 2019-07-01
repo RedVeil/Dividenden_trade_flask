@@ -1,8 +1,5 @@
 import sqlite3
 from datetime import date
-import matplotlib.pyplot as plt
-from alphaVantageAPI.alphavantage import AlphaVantage
-import fix_yahoo_finance as yf
 import math
 import time
 
@@ -232,7 +229,7 @@ def backtesting(package, timeframe, amount_high, amount_medium, amount_low, tax_
 
 def get_packages(package, timeframe, year, amount_high, amount_medium, amount_low, tax_credit_high,tax_credit_low):
     print(year)
-    db_connection = sqlite3.connect('analysis\\databases\\div_trade_v7.db') #7
+    db_connection = sqlite3.connect('analysis/databases/div_trade_v7.db') #7
     db_cursor = db_connection.cursor()
     package_objects = {}
     package_object = Package()
