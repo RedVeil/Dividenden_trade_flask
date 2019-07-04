@@ -7,9 +7,11 @@ import fix_yahoo_finance as yf
 import numpy
 import time
 import csv
+import json
+
 
 def fill_tables(scenarios, year, dividend_percentage, name):
-    db_connection = sqlite3.connect('databases/div_trade_v7.db')
+    db_connection = sqlite3.connect('databases/div_trade_v8b.db')
     db_cursor = db_connection.cursor()
     db_cursor.execute(f"SELECT ID FROM Companies WHERE Company = '{name}'")
     company_id = db_cursor.fetchone()
@@ -30,7 +32,7 @@ def fill_tables(scenarios, year, dividend_percentage, name):
     print(f"{year} tables filled")
 
 def write_year_to_db(scenarios, date, name, dividend_percentage, market, currency, ticker):
-    db_connection = sqlite3.connect('databases/div_trade_v7.db')
+    db_connection = sqlite3.connect('databases/div_trade_v8b.db')
     db_cursor = db_connection.cursor()
     year = str(date)[0:4]
     db_cursor.execute(f"SELECT Company FROM Companies WHERE Company = '{name}'")
@@ -186,7 +188,7 @@ def calc_day_line200(timeframe, calc, date, dates):
     return day_line200
 
 def update_year_count(name):
-    db_connection = sqlite3.connect('databases/div_trade_v7.db')
+    db_connection = sqlite3.connect('databases/div_trade_v8b.db')
     db_cursor = db_connection.cursor()
     db_cursor.execute(f"SELECT Years FROM Companies WHERE Company = '{name}'")
     years_count= db_cursor.fetchone()
@@ -208,7 +210,7 @@ def get_prices(calc, company, name, dividends, market, currency):
                 scenario, dividend_percentage = calc.calc_scenario(date, timeframe_buy, timeframe_sell, company, dividends, day_line200, dates) 
                 period = f"{timeframe_buy}-{timeframe_sell}"
                 scenarios[period] = scenario
-        this_year = write_year_to_db(scenarios, date, name, dividend_percentage, market, currency, company)
+        write_year_to_db(scenarios, date, name, dividend_percentage, market, currency, company)
     
 
 
@@ -330,9 +332,32 @@ def start(company):
                 highs = check_for_null(highs, "first")
                 lows = check_for_null(lows, "first")
                 closes = check_for_null(closes, "first")
-                if currency != "EUR":
+                if currency != "EUR" and currency != "ILS":
                     print(currency)
-                    with open(f"currencies/foreign-eur/fx_daily_{currency}_EUR.csv", "r") as currency_data:
+                    with open(f"currencies/foreign-eur/{currency}EUR.FOREX.csv", "r") as currency_data:
+                        table=csv.reader(currency_data)
+                        cur_dates = []
+                        cur_close = []
+                        for row in table:    
+                            cur_dates.append(row[0])
+                            cur_close.append(row[4])
+                        #print(type(high))
+                    for i in range(len(highs)):
+                        conversion_amount = find_cur_date(dates[i], cur_dates, cur_close)
+                        high = highs[i]
+                        low = lows[i]
+                        close = closes[i]
+                        high = round(float(high)*float(conversion_amount),2)
+                        low = round(float(low)*float(conversion_amount),2)
+                        close = round(float(close)*float(conversion_amount),2)
+                        days.append(Day(dates[i], high, low, close))
+                    for n in range(len(dividend_days)):
+                        conversion_amount = find_cur_date(dividend_days[n], cur_dates, cur_close)
+                        dividend_amount = round(float(dividend_amounts[n])*float(conversion_amount),2)
+                        temp_dividends[dividend_days[n]] = dividend_amount
+                if currency == "ILS":
+                    print(currency)
+                    with open(f"currencies/foreign-eur/fx_daily_ILS_EUR.csv", "r") as currency_data:
                         table=csv.reader(currency_data)
                         cur_dates = []
                         cur_close = []
@@ -361,11 +386,11 @@ def start(company):
                 dividends[company] = temp_dividends 
                 # create Days with date, high, low  
                 print("step1 done")
-                #calc = DividendCalculator(days)
+                calc = DividendCalculator(days)
                 
                 #start calculations
                 #
-                #get_prices(calc, company, name, dividends, market, currency)
+                get_prices(calc, company, name, dividends, market, currency)
     
 
 if __name__ == "__main__": 
@@ -375,13 +400,14 @@ if __name__ == "__main__":
         output_size='full',
         datatype='json',
         clean=True,)
-    # company ticker
-    tickers = ['SIE.DE']
-    total_tickers = ["BIM.PA"
-    ]
-    for company in total_tickers:       
+    db_connection = sqlite3.connect('databases/div_trade_v7.db')
+    db_cursor = db_connection.cursor()
+    db_cursor.execute(f"SELECT Ticker FROM Companies")
+    db_ticker= db_cursor.fetchall()
+    db_connection.close()
+    total_ticker = []
+    for ticker in db_ticker:
+        if ticker[0] not in total_ticker:
+            total_ticker.append(ticker[0])
+    for company in total_ticker:
         start(company)
-        #pass
-
-
-#'BDT.DE', 
