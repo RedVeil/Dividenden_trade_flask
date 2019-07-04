@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block header %}
+<h1>Landing Page</h1>
+{% endblock %}
+{% block content %}
+<h1 id="title">Start</h1>
+<form action="" method="POST" id="start_analysis">
+    <label for="timeframe_buy">Kaufzeitraum</label>
+    <input type="number" name="timeframe_buy" id="timeframe_buy" min=1 max=60 placeholder="1-60" required>
+    <label for="timeframe_sell">Verkaufszeitraum</label>
+    <input type="number" name="timeframe_sell" id="timeframe_sell" min=0 max=10 placeholder="0-10" required>
+    <label for="timeframe_sell">Start Jahr</label>
+    <input type="number" name="start_year" id="start_year" min=2002 max=2017 placeholder="2002-2017" required>
+    <label for="timeframe_sell">End Jahr</label>
+    <input type="number" name="end_year" id="end_year" min=2003 max=2018 placeholder="2003-2018" required>
+    <input type="submit" value="Send" id="submit">
+</form>
+{% endblock %}
