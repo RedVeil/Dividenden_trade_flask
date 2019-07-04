@@ -1,3 +1,8 @@
-x = [{1:"a", 2:"b", 3:"c", 4:"d"}]
-x[0][5] = "e"
+x = ["A","B","C"]
+x = x[x.index("B"):]
 print(x)
+
+y = "L'Oréal S.A"
+
+y = y.replace("'","")
+print(y)

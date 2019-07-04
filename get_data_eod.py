@@ -186,6 +186,8 @@ def get_stock_info(ticker, api_token, params):
         stock_info = json.loads(response_stock_info.text)
         stock_info = stock_info[0]
         name = stock_info["Name"]
+        if "'" in name:
+            name = name.replace("'", "")
         currency = stock_info["Currency"]
         market = stock_info["Country"]
         exchange = stock_info["Exchange"]
@@ -244,6 +246,7 @@ def get_ticker():
 if __name__ == "__main__":
     api_token="5d19ac0dbbdd85.51123060"
     total_ticker = get_ticker()
+    total_ticker = total_ticker[total_ticker.index("LOréal S.A"):]
     timeframes = create_timeframes()
     for ticker in total_ticker:
         company = get_eod_data(ticker[0], api_token)
