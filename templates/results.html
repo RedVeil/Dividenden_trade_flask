@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+{% block header %}
+<h1>Results</h1>
+{% endblock %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js'></script>
+<style>
+table {
+    margin:1em,
+}
+table tr:nth-child(even) {
+  background-color: #eee;
+}
+table tr:nth-child(odd) {
+ background-color: #fff;
+}
+table th {
+  background-color: black;
+  color: white;
+}
+
+</style>
+</head>
+
+<body>
+  <center>
+    <h1>Ergebniss: {{timeframe_buy}}-{{timeframe_sell}}</h1>
+
+    <canvas id="chart" width="800" height="400"></canvas>
+    
+    <script>
+        var ctx = document.getElementById("chart").getContext("2d");
+        var lineChartData = {
+            labels : [
+                    {% for item in labels %}
+                        "{{ item }}",
+                    {% endfor %}
+                    ],
+            datasets : [{
+                label: "high",
+                //lineTension: 0.1,
+                //pointHitRadius: 16,
+                borderColor: "rgba(222,86, 60, 87)",
+				pointBackgroundColor: "rgba(222,86, 60, 87)",
+				fill: false,
+                data : [
+                    {% for item in values_high %}
+                    {{ item }},
+                    {% endfor %}]
+            },{
+                label: "medium",
+                //lineTension: 0.1,
+                //pointHitRadius: 16,
+                borderColor: "rgba(249, 144, 12, 98)",
+				pointBackgroundColor: "rgba(249, 144, 12, 98)",
+				fill: false,
+                data : [
+                    {% for item in values_medium %}
+                        {{ item }},
+                        {% endfor %}]
+            },{
+                label: "low",
+                //lineTension: 0.1,
+                //pointHitRadius: 16,
+                borderColor: "rgba(49, 58, 135, 53)",
+				pointBackgroundColor: "rgba(49, 58, 135, 53)",
+				fill: false,
+                data : [
+                    {% for item in values_low %}
+                        {{ item }},
+                        {% endfor %}]
+            }],
+        };
+
+        var myChart = new Chart(ctx, {
+            type: 'line',
+            data: lineChartData,
+            options:{
+                legend:{
+                    display: true,
+                },
+                layout:{
+                    padding: 50,},
+
+                tooltips:{
+                    //position: "nearest",
+                    xPadding: 32,
+                    yPadding: 14,
+                   
+                },
+                scales: {
+                    yAxes: [{
+                        ticks:{
+                            min: 0,
+                            max: 15000,
+                            stepSize: 500,
+                        },
+                    }],
+                    xAxes: [{
+                        gridLines:{
+                            display: false,
+                        },
+                    }],
+                },
+            },        
+        });
+        
+    </script>
+    <br>
+    <h2>Best Case Historie</h2>
+    <table id="history_high" style="width:100%">
+        <tr>
+        <th>Kaufdatum</th>
+        <th>Verkaufsdatum</th>
+        <th>Ticker</th> 
+        <th>Name</th>      
+        <th>Kapital</th>
+        <th>Kapital nach Gebühr</th>
+        <th>Anzahl Aktien</th>
+        <th>Kaufpreis</th>
+        <th>Verkaufpreis</th>
+        <th>Dividende</th>   
+        <th>Return nach Gebühr</th>
+        <th>Steuerguthaben</th>
+        <th>Steuern</th>
+        <th>Ungenutzes Kapital</th>
+        <th>Trade Ergebniss</th>    
+        </tr>
+        {% for breakdown in breakdowns %}
+        <tr>
+        <td>{{breakdown.buy_date}}</td>
+        <td>{{breakdown.sell_date}}</td>
+        <td>{{breakdown.ticker}}</td>
+        <td>{{breakdown.name}}</td>
+        <td>{{breakdown.start_amount_high}}</td>
+        <td>{{breakdown.capital_minus_fees_high}}</td>
+        <td>{{breakdown.stock_amount_high}}</td>
+        <td>{{breakdown.buy_price_low}}</td>
+        <td>{{breakdown.sell_price_high}}</td>
+        <td>{{breakdown.dividend}}</td>       
+        <td>{{breakdown.return_high}}</td>
+        <td>{{breakdown.tax_credit_high}}</td>
+        <td>{{breakdown.taxes_high}}</td>
+        <td>{{breakdown.unused_high}}</td>
+        <td>{{breakdown.return_final_high}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <br>
+    <h2>Worst Case Historie</h2>
+    <table id="history_low" style="width:100%">
+        <tr>
+        <th>Kaufdatum</th>
+        <th>Verkaufsdatum</th>
+        <th>Ticker</th> 
+        <th>Name</th>      
+        <th>Kapital</th>
+        <th>Kapital nach Gebühr</th>
+        <th>Anzahl Aktien</th>
+        <th>Kaufpreis</th>
+        <th>Verkaufpreis</th>
+        <th>Dividende</th>
+        <th>Return nach Gebühr</th>
+        <th>Steuerguthaben</th>
+        <th>Steuern</th>
+        <th>Ungenutzes Kapital</th>
+        <th>Trade Ergebniss</th>           
+        </tr>
+        {% for breakdown in breakdowns %}
+        <tr>
+        <td>{{breakdown.buy_date}}</td>
+        <td>{{breakdown.sell_date}}</td>
+        <td>{{breakdown.ticker}}</td>
+        <td>{{breakdown.name}}</td>
+        <td>{{breakdown.start_amount_low}}</td>
+        <td>{{breakdown.capital_minus_fees_low}}</td>
+        <td>{{breakdown.stock_amount_low}}</td>
+        <td>{{breakdown.buy_price_high}}</td>
+        <td>{{breakdown.sell_price_low}}</td>
+        <td>{{breakdown.dividend}}</td>   
+        <td>{{breakdown.return_low}}</td>
+        <td>{{breakdown.tax_credit_low}}</td>
+        <td>{{breakdown.taxes_low}}</td>
+        <td>{{breakdown.unused_low}}</td>
+        <td>{{breakdown.return_final_low}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <h2>Trade Daten</h2>
+    <table id="t01" style="width:100%">
+        <tr>
+        <th>Kaufdatum</th>
+        <th>Verkaufsdatum</th> 
+        <th>Ticker</th>
+        <th>Name</th>
+        <th>Höchst Kaufpreis</th>
+        <th>Niedrigster Verkaufpreis</th>
+        <th>Niedrigster Kaufpreis</th>
+        <th>Höchst Verkaufpreis</th>   
+        </tr>
+        {% for trade in trades %}
+        <tr>
+        <td>{{trade[0]}}</td>
+        <td>{{trade[1]}}</td>
+        <td>{{trade[2]}}</td>
+        <td>{{trade[7]}}</td>
+        <td>{{trade[3]}}</td>
+        <td>{{trade[6]}}</td>
+        <td>{{trade[4]}}</td>
+        <td>{{trade[5]}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <br>
+  </center>
+</body>
+
+</html>
+{% endblock %}
+
+
+<!---
+<ol>
+        {% for trade in trades %}
+        <li>{{trade}}</li>
+        {% endfor %}
+    </ol>-->

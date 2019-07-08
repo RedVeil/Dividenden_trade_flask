@@ -66,7 +66,6 @@ def full_controll():
         total_values_high = []
         total_values_medium = []
         total_values_low = []
-
         total_trades = []
         total_buy_dates = []
         total_breakdowns = []
@@ -77,7 +76,6 @@ def full_controll():
                 total_values_high.append(n)
             for x in medium_hists[key]:
                 total_values_medium.append(x)
-
         for key in package_objects.keys():
             for trade in package_objects[key].trades:
                 total_trades.append([trade[0], trade[1],trade[2],round(trade[3],2),round(trade[4],2),round(trade[5],2),round(trade[6],2), trade[7]])
@@ -90,4 +88,3 @@ def full_controll():
         values_medium=total_values_medium, values_low=total_values_low ,
         trades=total_trades, breakdowns=total_breakdowns, timeframe_buy = form_data["timeframe_buy"], timeframe_sell= form_data["timeframe_sell"])
     return render_template("landing.html", form=form)
-
