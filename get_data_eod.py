@@ -131,7 +131,6 @@ class Company:
         for index in self.dividend_data:
             if self.dividend_data[index]["date"] == dividend_date:
                 self.dividend_data[index]["percentage"] = dividend_percentage
-        return dividend_percentage  
 
     def currency_conversion(self, to_convert, date):
         if self.currency != "EUR" and self.currency != "ILS":
@@ -170,7 +169,7 @@ class Company:
     def calc_scenario(self, hv, timeframe_buy, timeframe_sell):
         ex_day, index = self.get_day_by_date(self.dividend_data[hv]["date"])
         dividend_value = float(self.currency_conversion(self.dividend_data[hv]["value"],self.dividend_data[hv]["date"]))
-        dividend_percentage = float(self.calculate_dividend_percentage(dividend_value, self.dividend_data[hv]["date"], ex_day))
+        self.calculate_dividend_percentage(dividend_value, self.dividend_data[hv]["date"], ex_day)
         buy_high, buy_average, buy_low, buy_date = self.get_buy_prices(index, timeframe_buy)
         sell_high, sell_average, sell_low, sell_date= self.get_sell_prices(index, timeframe_sell)
         scenario = Scenario(buy_high, buy_average, buy_low, sell_high, sell_average, sell_low, dividend_value, buy_date, sell_date, timeframe_buy, timeframe_sell)
@@ -189,6 +188,8 @@ def get_stock_info(ticker, api_token, params):
         if "'" in name:
             name = name.replace("'", "")
         currency = stock_info["Currency"]
+        if currency == "GBX":
+            currency = "GBP"
         market = stock_info["Country"]
         exchange = stock_info["Exchange"]
         eod_ticker = f"{ticker}.{exchange}"
@@ -235,22 +236,38 @@ def create_timeframes():
             timeframes[timeframe] = [timeframe_buy,timeframe_sell]
     return timeframes
 
+def check_zar(ticker, api_token):
+    params = {"api_token":api_token}
+    session=requests.Session()
+    url_stock_info = f"https://eodhistoricaldata.com/api/search/{ticker}?api_token={api_token}"
+    response_stock_info = session.get(url_stock_info, params=params)
+    if response_stock_info.status_code == requests.codes.ok:
+        stock_info = json.loads(response_stock_info.text)
+        if stock_info:
+            currency = stock_info[0]["Currency"]
+            if currency == "ZAR":
+                return True
+
 def get_ticker():
     db_connection = sqlite3.connect('databases/div_trade_v7.db')
     db_cursor = db_connection.cursor()
     db_cursor.execute(f"SELECT Ticker FROM Companies")
     total_ticker= db_cursor.fetchall()
+    total_tickers = []
+    for ticker in total_ticker:
+        total_tickers.append(ticker[0])
     db_connection.close()
-    return total_ticker
+    return total_tickers
 
 if __name__ == "__main__":
     api_token="5d19ac0dbbdd85.51123060"
     total_ticker = get_ticker()
-    total_ticker = total_ticker[total_ticker.index("LOréal S.A"):]
+    total_ticker = total_ticker[total_ticker.index("SU.PA")+1:]
     timeframes = create_timeframes()
     for ticker in total_ticker:
-        company = get_eod_data(ticker[0], api_token)
-        for hv in company.dividend_data:
-            for timeframe in timeframes:
-                company.calc_scenario(hv, timeframes[timeframe][0], timeframes[timeframe][1])
-            company.write_hv_to_db(hv)
+        if not check_zar(ticker, api_token):
+            company = get_eod_data(ticker, api_token)
+            for hv in company.dividend_data:
+                for timeframe in timeframes:
+                    company.calc_scenario(hv, timeframes[timeframe][0], timeframes[timeframe][1])
+                company.write_hv_to_db(hv)

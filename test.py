@@ -1,8 +1,12 @@
-x = ["A","B","C"]
-x = x[x.index("B"):]
-print(x)
+import sqlite3
 
-y = "L'Oréal S.A"
+def get_ticker():
+    db_connection = sqlite3.connect('databases/div_trade_v7.db')
+    db_cursor = db_connection.cursor()
+    db_cursor.execute(f"SELECT Ticker FROM Companies")
+    total_ticker= db_cursor.fetchall()
+    db_connection.close()
+    for i in total_ticker:
+        print(i)
 
-y = y.replace("'","")
-print(y)
+get_ticker()

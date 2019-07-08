@@ -1,5 +1,5 @@
 import sqlite3
-from . import web_build_packages as packages
+import web_build_packages as packages
         
 class Company:
     def __init__(self, ticker, name, company_id, average_high, average_medium, average_low, median_high, median_medium,median_low, bad_trades, severe_trades, great_trades, start_date, end_date):       

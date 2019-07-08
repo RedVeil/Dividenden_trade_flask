@@ -1,6 +1,6 @@
 import sqlite3
 from datetime import date
-from . import web_create_indicator as indicator
+import web_create_indicator as indicator
 
 class Company:
     def __init__(self, ticker, name, company_id, firm_years):

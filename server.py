@@ -5,8 +5,12 @@ from flask import Flask, render_template, redirect, request
 import web_build_packages as package
 import web_filter_companies as filter_companies
 
-app = Flask(__name__,)
+app = Flask(__name__)
+app.config["SECRET_KEY"] = "Secret Key"
 
+@app.route('/test')
+def test():
+    return render_template("test.html")
 
 class ExpertForm(FlaskForm):
     timeframe_buy = IntegerField("Kaufzeitraum", default=60)
@@ -52,43 +56,6 @@ class ExpertForm(FlaskForm):
         "Multiplier Trades ueber 10%", default=100)
     submit = SubmitField()
 
-    '''@app.route('/', methods=("GET","POST"))
-    def landing():
-        if request.method == "POST":
-            result = request.form
-            timeframe_buy, timeframe_sell, start_year, end_year = result.values()
-            high_hists, medium_hists, low_hists, package_objects, breakdowns_per_year = package.web_call(
-                timeframe_buy, timeframe_sell, start_year, end_year)
-            total_values_high = []
-            total_values_medium = []
-            total_values_low = []
-
-            total_trades = []
-            total_buy_dates = []
-            total_breakdowns = []
-            for key in low_hists.keys():
-                for i in low_hists[key]:
-                    total_values_low.append(i)
-                for n in high_hists[key]:
-                    total_values_high.append(n)
-                for x in medium_hists[key]:
-                    total_values_medium.append(x)
-
-            for key in package_objects.keys():
-                for trade in package_objects[key].trades:
-                    total_trades.append([trade[0],trade[1],trade[2],round(trade[3],2),round(
-                        trade[4],2),round(trade[5],2),round(trade[6],2), trade[7]])
-                    total_buy_dates.append(trade[0])
-            for key in breakdowns_per_year.keys():
-                for k in breakdowns_per_year[key]:
-                    total_breakdowns.append(breakdowns_per_year[key][k])
-            line_labels = total_buy_dates
-            return render_template('results.html', labels=line_labels, values_high=total_values_high,
-            values_medium=total_values_medium, values_low=total_values_low ,
-            trades=total_trades, breakdowns=total_breakdowns,timeframe_buy = timeframe_buy, timeframe_sell= timeframe_sell)
-        return render_template("landing_page.html")'''
-
-
 @app.route('/', methods=("GET", "POST"))
 def full_controll():
     form = ExpertForm()
@@ -122,5 +89,5 @@ def full_controll():
         return render_template('results.html', labels=line_labels, values_high=total_values_high,
         values_medium=total_values_medium, values_low=total_values_low ,
         trades=total_trades, breakdowns=total_breakdowns, timeframe_buy = form_data["timeframe_buy"], timeframe_sell= form_data["timeframe_sell"])
-        return render_template("landing.html", form=form)
+    return render_template("landing.html", form=form)
 
