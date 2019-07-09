@@ -120,15 +120,14 @@ def test_against_indizes(packages, timeframe):
 
 def backtesting(package, timeframe, amount_high, amount_medium, amount_low, tax_credit_high,tax_credit_low):
     last_dates = []
-    fees = 0.01
-    taxes = 0.275
+    fees = 0.01  #0.01
+    taxes = 0.275 #0.275
     high_hist = []
     medium_hist = []
     low_hist = []
     backtest_breackdowns = {}
     for trade in package.trades:
         backtest_breackdowns[trade[0]] = Backtest_Breakdown(trade[0], trade[1], trade[7], trade[2], timeframe, amount_high, amount_low, trade[3], trade[4], trade[5], trade[6], trade[8], trade[9], trade[10])
-        #print(trade[0])
         fees_amount_high = math.ceil(amount_high*fees)
         fees_amount_low = math.ceil(amount_low*fees)
         amount_high -= round(fees_amount_high,2)
