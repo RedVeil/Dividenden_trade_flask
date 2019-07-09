@@ -262,7 +262,7 @@ def get_ticker():
 if __name__ == "__main__":
     api_token="5d19ac0dbbdd85.51123060"
     total_ticker = get_ticker()
-    total_ticker = total_ticker[total_ticker.index("SU.PA")+1:]
+    total_ticker = total_ticker[total_ticker.index("SDR.L"):]
     timeframes = create_timeframes()
     for ticker in total_ticker:
         if not check_zar(ticker, api_token):

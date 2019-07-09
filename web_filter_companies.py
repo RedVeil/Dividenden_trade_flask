@@ -123,7 +123,7 @@ def fetch_company(raw_data,companies, year):
             start_id = str(row[1])
         firm_id = f"{row[1]}.{counter}"
         if firm_id not in companies.keys():
-            db_connection = sqlite3.connect('./databases/div_trade_v7.db')
+            db_connection = sqlite3.connect('./databases/div_trade_v8b.db')
             db_cursor = db_connection.cursor()   
             db_cursor.execute(f"SELECT Market FROM 'Companies' WHERE ID = '{row[1]}'")
             market = db_cursor.fetchone()
@@ -161,7 +161,7 @@ def filter_firm(company, form_data):
 
 # 2
 def grab_data(year, companies, timeframe):
-    db_connection = sqlite3.connect('./databases/div_trade_v7.db')
+    db_connection = sqlite3.connect('./databases/div_trade_v8b.db')
     db_cursor = db_connection.cursor()
     db_cursor.execute(f"SELECT * FROM '{year}' WHERE Timeframe = '{timeframe}' ") 
     raw_data = db_cursor.fetchall()

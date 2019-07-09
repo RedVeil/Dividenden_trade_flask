@@ -229,9 +229,8 @@ def backtesting(package, timeframe, amount_high, amount_medium, amount_low, tax_
 
 def get_packages(package, timeframe, year, amount_high, amount_medium, amount_low, tax_credit_high,tax_credit_low):
     print(year)
-    db_connection = sqlite3.connect('analysis/databases/div_trade_v7.db') #7
+    db_connection = sqlite3.connect('./databases/div_trade_v8b.db') #7
     db_cursor = db_connection.cursor()
-    package_objects = {}
     package_object = Package()
     package = package[1]
     for n in range(len(package)):
