@@ -79,7 +79,7 @@ def sort_ranking(ranking, timeframe, last_date):
     ranking.sort()
     packages = {}
     counter = 0
-    while counter < 10:  # 10 or more (amount of packages)
+    while counter < 30:  # 10 or more (amount of packages)
         if type(ranking[0][0]) != str:
             package, points = package_loop_datetime(
                 ranking, counter, last_date)
@@ -92,7 +92,7 @@ def sort_ranking(ranking, timeframe, last_date):
         to_sort.append((packages[key][0], key))
     to_sort.sort()
     to_sort.reverse()
-    best_package = packages[packages.keys() == to_sort[0]]
+    best_package = packages[to_sort[0][1]]
     return best_package
 
 
