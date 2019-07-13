@@ -1,17 +1,3 @@
-LSE
-US
-TO
-XETRA
-F
-LU
-VI
-MI
-PA
-VX
-SW
-MC
-ST
-OL
-HE
-CO
-HK
+import sqlite3
+
+

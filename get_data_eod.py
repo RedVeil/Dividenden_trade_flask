@@ -57,20 +57,15 @@ class Company:
                             VALUES ('{company_id}', '{i.timeframe_buy}','{i.timeframe_sell}',{i.best_percent},{i.medium_percent},{i.worst_percent}, {hv["percentage"]} , {i.dividend}, 0,
                             '{i.buy_date}', '{i.sell_date}',
                             {i.buy_high},{i.buy_low},{i.sell_high},{i.sell_low})""")
-            '''db_cursor.execute(f"""INSERT INTO '{year}' ('Company_ID', 'Timeframe_Buy','Timeframe_Sell','High_%','Avg_%','Low_%', 'Dividend_%','Dividends','Day_Line200', 'Buy_Date', 'Sell_Date',
-                            'Buy_High', 'Buy_Low', 'Sell_High', 'Sell_Low') 
-                            VALUES ('{company_id}', '{i.timeframe_buy}','{i.timeframe_sell}',{i.best_percent},{i.medium_percent},{i.worst_percent}, {hv["percentage"]} , {i.dividend}, 0,
-                            '{i.buy_date}', '{i.sell_date}',
-                            {i.buy_high},{i.buy_low},{i.sell_high},{i.sell_low})""")
-        db_connection.commit()'''
+        db_connection.commit()
         db_cursor.close()
         print(f"{year} tables filled")
 
     def write_hv_to_db(self, hv):
-        '''db_connection = sqlite3.connect('databases/div_trade_v8.db')
-        db_cursor = db_connection.cursor()'''
+        db_connection = sqlite3.connect('databases/div_trade_v8.db')
+        db_cursor = db_connection.cursor()
         year = str(hv["date"])[0:4]
-        '''db_cursor.execute(
+        db_cursor.execute(
             f"SELECT Company FROM Companies WHERE Company = '{self.name}'")
         company = db_cursor.fetchone()
         if not company:
@@ -98,7 +93,7 @@ class Company:
         except sqlite3.OperationalError:
             pass
         db_connection.commit()
-        db_cursor.close()'''
+        db_cursor.close()
         self.fill_tables(year, hv)
 
     def add_scenario(self, scenario, date):
@@ -245,11 +240,11 @@ def initial_filter(historic_data, dividend_data, company):
     if type(dividend_data) != dict:
         return False
     try:
-        x = historic_data[-1]["close"]*0.5
+        x = float(historic_data[-1]["close"])*0.5
     except TypeError:
         return False
     try:
-        y = dividend_data["1"]["value"]*0.5
+        y = float(dividend_data["1"]["value"])*0.5
     except TypeError:
         return False
     except KeyError:
@@ -299,9 +294,6 @@ def initial_filter(historic_data, dividend_data, company):
     if company.currency == "USD" or company.currency == "CAD":
         if len(dividend_data.keys()) < 32:
             return False
-    if company.currency == "GBP":
-        if len(dividend_data.keys()) < 16:
-            return False
     if len(dividend_data.keys()) < 8:
         return False
     for i in historic_data:
@@ -346,7 +338,7 @@ def create_timeframes():
 
 
 def get_ticker(api_token):
-    exchange_codes={"UK":"LSE", "US":"US","CA":"TO","GER":"XETRA", "LUX":"LU","AT":"VI","SP":"MC","FR":"PA","CHF":"VX","IT":"MI","SWE":"ST","NOR":"OL","DEN":"CO"}
+    exchange_codes={"GER":"XETRA", "LUX":"LU","AT":"VI","SP":"MC","FR":"PA","CHF":"VX","IT":"MI","SWE":"ST","NOR":"OL","DEN":"CO"} #"UK":"LSE", "US":"US","CA":"TO",
     session = requests.Session()
     params = {"api_token": api_token}
     companies = {}
@@ -369,15 +361,13 @@ def get_ticker(api_token):
 if __name__ == "__main__":
     api_token = "5d19ac0dbbdd85.51123060"
     companies = get_ticker(api_token)
-    print(len(companies))
     timeframes = create_timeframes()
     for key in companies.keys():
         company=companies[key]
-        print(company.ticker)
-        print(company.name, company.currency)
         eod_ticker = f"{company.ticker}.{company.exchange}"
         historic_data, dividend_data = get_eod_data(eod_ticker, api_token)
         if initial_filter(historic_data, dividend_data, company):
+            print(company.name, company.currency, company.exchange)
             company.currency_conversion(historic_data, dividend_data)
             for hv in company.dividends:
                 for timeframe in timeframes:

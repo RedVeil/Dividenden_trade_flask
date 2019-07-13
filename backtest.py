@@ -222,7 +222,7 @@ def backtesting(package, timeframe, amount_high, amount_medium, amount_low, tax_
     final_amount_medium = round(amount_medium, 2)
     final_amount_low = round(amount_low, 2)
     last_date = last_dates[0]
-
+    print(final_amount_high, final_amount_medium,final_amount_low)
     return final_amount_high, final_amount_medium, final_amount_low, last_date, high_hist, medium_hist, low_hist, backtest_breackdowns, tax_credit_high,tax_credit_low
 
 

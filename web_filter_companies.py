@@ -115,6 +115,10 @@ class Company:
         if self.great_trades < form_data["great_trades_threshold"]:
             self.strikes += form_data["great_trades_strikes"]
 
+class Companies:
+    def __init__(self):
+        self.companies = {}
+
 
 def fetch_company(raw_data, companies, year):
     counter = 0
@@ -203,9 +207,7 @@ def webcall(form_data):
         companies[key].count_trades()
         companies[key].calc_median()
         checked_firm = filter_firm(companies[key], form_data)
-        if not checked_firm:
-            pass
-        else:
+        if checked_firm:
             checked_firms.append(checked_firm)
 
     high_hists, medium_hists, low_hists, package_objects, breakdowns_per_year = indicator.get_accepted_companies(
