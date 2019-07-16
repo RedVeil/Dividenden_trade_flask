@@ -38,10 +38,13 @@ def get_companies(companies, year, last_date="0"):
     return best_package
 
 def get_forecasting_companies(companies, year, start_date):
+    print(len(companies))
+    print(start_date)
+    print(year)
     to_sort = []
     for key in companies.keys():
         if companies[key].buy_date > start_date:
-            to_sort.append({"buy_date":companies[key].buy_date, "sell_date":companies[key].start_date, "points":companies[key].ranking_points[year-1],"name":companies[key].name, "ticker":companies[key].ticker})
+            to_sort.append({"buy_date":companies[key].buy_date, "sell_date":companies[key].sell_date, "forecast_date":companies[key].forecast_date,"points":companies[key].ranking_points[year],"name":companies[key].name, "ticker":companies[key].ticker})
     ranking = sorted(to_sort, key=itemgetter("buy_date"))
     packages = create_packages(ranking)
     packages_sorted = sorted(packages, key=itemgetter("points"), reverse=True)

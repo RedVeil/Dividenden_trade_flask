@@ -67,8 +67,11 @@ class Company:
         if buy_index == 1:
             trend200 = round(buy_close/1,2)
         else:
-            trend200 = round(buy_close/(sum_close/len(close_prices)),2)
-        self.trends200[year] = trend200
+            try:
+                trend200 = round(buy_close/(sum_close/len(close_prices)),2)
+                self.trends200[year] = trend200
+            except ZeroDivisionError:
+                print(year, ticker, buy_index, buy_close, close_prices, sum_close)
 
     def get_buy_sell_values(self, ticker, dividend_date, db_connection, db_cursor, timeframe_buy, timeframe_sell):
         db_cursor.execute(f"SELECT * FROM '{ticker}' WHERE ID = (SELECT ID FROM '{ticker}' WHERE DATE = '{dividend_date}')-{timeframe_buy}") 
@@ -97,7 +100,10 @@ class Company:
             if key <= year:
                 sum_average_percent += self.trades[key].average_return["percent"]
                 length_counter += 1
-        self.average_returns[year] = round(sum_average_percent/length_counter,2)
+        try:
+            self.average_returns[year] = round(sum_average_percent/length_counter,2)
+        except ZeroDivisionError:
+            print(self.ticker, year, self.trades.keys(),length_counter)
 
     def calc_median(self, year):
         return_percents = []
@@ -162,29 +168,40 @@ class Companies:
     def add_company(self, ID, company):
         self.companies[ID] = company
 
-    def fill_companies(self,db_connection, db_cursor, company_infos, timeframe_buy, timeframe_sell, form_data):
-        years = [2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
-                   2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018]
+    def check_last_five_years(self, ID):
+        last_five_years = [2014, 2015, 2016, 2017, 2018]
+        for year in last_five_years:
+            if year not in self.companies[ID].trades.keys() and year not in self.companies[ID].ranking_points.keys():
+                return False
+        return True
+
+
+    def fill_companies(self, db_connection, db_cursor, company_infos, timeframe_buy, timeframe_sell, form_data, input_year):
+        years = [2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018] #2000, 2001, 2002, 2003, 2004, 2005, 2006, 
         for year in years:
+            print(year)
             db_cursor.execute(f"SELECT * FROM 'dividends_{year}'")
             dividends_data = db_cursor.fetchall()
             for row in dividends_data:
-                ticker = company_infos[row[1]]["ticker"]
-                ID = f"{ticker}"
-                if ID in self.companies.keys():   
-                    if self.companies[ID].add_trade(year, company_infos[row[1]]["ticker"], row[3],row[4], db_connection, db_cursor, timeframe_buy, timeframe_sell):
-                        self.companies[ID].add_dividend_values(year, row[3],row[4],row[5])
-                else:
-                    new_company = Company(company_infos[row[1]]["ticker"],company_infos[row[1]]["name"],row[1], company_infos[row[1]]["hv_date"], 
-                    company_infos[row[1]]["buy_date"], company_infos[row[1]]["sell_date"])
-                    self.add_company(ID, new_company)
-                    if self.companies[ID].add_trade(year, company_infos[row[1]]["ticker"], row[3],row[4], db_connection, db_cursor, timeframe_buy, timeframe_sell):
-                        self.companies[ID].add_dividend_values(year, row[3],row[4],row[5])
-        for key in self.companies.keys():
-            self.companies[ID].calc_average(years[-1])
-            self.companies[ID].calc_median(years[-1])
-            self.companies[ID].assess_trades(years[-1])
-            self.companies[ID].calc_strikes(years[-1], form_data)
+                if row[1] in company_infos.keys():
+                    ticker = company_infos[row[1]]["ticker"]
+                    ID = f"{ticker}"
+                    if ID in self.companies.keys():   
+                        if self.companies[ID].add_trade(year, company_infos[row[1]]["ticker"], row[3],row[4], db_connection, db_cursor, timeframe_buy, timeframe_sell):
+                            self.companies[ID].add_dividend_values(year, row[3],row[4],row[5])
+                    else:
+                        new_company = Company(company_infos[row[1]]["ticker"],company_infos[row[1]]["name"],row[1], company_infos[row[1]]["hv_date"], 
+                        company_infos[row[1]]["buy_date"], company_infos[row[1]]["sell_date"])
+                        self.add_company(ID, new_company)
+                        if self.companies[ID].add_trade(year, company_infos[row[1]]["ticker"], row[3],row[4], db_connection, db_cursor, timeframe_buy, timeframe_sell):
+                            self.companies[ID].add_dividend_values(year, row[3],row[4],row[5])
+        
+        for ID in self.companies.keys():
+            if self.check_last_five_years(ID):
+                self.companies[ID].calc_average(input_year-1)
+                self.companies[ID].calc_median(input_year-1)
+                self.companies[ID].assess_trades(input_year-1)
+                self.companies[ID].calc_strikes(input_year-1, form_data)
                         
 
 
@@ -230,8 +247,6 @@ def filter_company(year, company):
             return False
     except KeyError:
         return False
-    if year not in company.trades.keys() or year not in company.ranking_points.keys():
-        return False
     if company.dividends[year]["percent"] > 30:
         return False
     if company.bad_trades[year] > 90: #50
@@ -248,15 +263,19 @@ def filter_company(year, company):
         return True
 
 def calculate_buy_and_sell_date(hv_date, timeframe_buy, timeframe_sell):
-    hv_split = x.split("-")
+    hv_split = hv_date.split("-")
     datetime_hv = date(int(hv_split[0]),int(hv_split[1]),int(hv_split[2]))
+    print(datetime_hv)
     buy_date = datetime_hv - timedelta(days=timeframe_buy)
+    print(buy_date, timeframe_buy)
+    print(datetime_hv)
     sell_date = datetime_hv - timedelta(days=-timeframe_sell)
+    print(sell_date, timeframe_sell)
     return buy_date, sell_date
 
 def webcall(form_data):
-    timeframe_buy = form_data["timeframe_buy"]
-    timeframe_sell = form_data["timeframe_sell"]
+    timeframe_buy = int(form_data["timeframe_buy"])
+    timeframe_sell = int(form_data["timeframe_sell"])
     timeframe = f"{timeframe_buy}-{timeframe_sell}"
     print(timeframe)
 
@@ -269,7 +288,7 @@ def webcall(form_data):
     params = {"api_token": api_token}  
     session = requests.Session()
     start_date = form_data["start_date"]
-    input_year = start_date[0:4]
+    input_year = int(start_date[0:4])
     url_forecasting = f"https://eodhistoricaldata.com/api/calendar/earnings?api_token={api_token}&from={start_date}&to={input_year}-12-31&fmt=json"
     reponse_forecasting = session.get(url_forecasting, params=params)
 
@@ -286,19 +305,21 @@ def webcall(form_data):
             forecasting_ticker[ticker] = element["report_date"]
 
         for row in db_company_infos:
-            if row[2] in forecasting_ticker.keys():
-                buy_date, buy_date = calculate_buy_and_sell_date(forecasting_ticker[row[2]], timeframe_buy, timeframe_sell)
-                company_infos[row[0]] = {"name":row[1],"exchange":row[3],"currency":row[4],"ticker":row[2], "hv_date":forecasting_ticker[row[2]]
-            ,"buy_date":buy_date,"sell_date":buy_date}
+            if row[3] != "US":
+                if row[2] in forecasting_ticker.keys():
+                    buy_date, sell_date = calculate_buy_and_sell_date(forecasting_ticker[row[2]], timeframe_buy, timeframe_sell)
+                    company_infos[row[0]] = {"name":row[1],"exchange":row[3],"currency":row[4],"ticker":row[2], "hv_date":forecasting_ticker[row[2]]
+            ,"buy_date":buy_date,"sell_date":sell_date}
 
         all_companies = Companies()
         filtered_companies = {}
         
-        all_companies.fill_companies(db_connection, db_cursor, company_infos, timeframe_buy, timeframe_sell, form_data)
+        all_companies.fill_companies(db_connection, db_cursor, company_infos, timeframe_buy, timeframe_sell, form_data, input_year)
         for key in all_companies.companies.keys():
             if filter_company(input_year-1, all_companies.companies[key]):
                 filtered_companies[key] = (all_companies.companies[key])
-        calc_indicator(input_year, filtered_companies, form_data)
+        print("indicator")
+        calc_indicator(input_year-1, filtered_companies, form_data)
         starte_date_split=start_date.split("-")
         datetime_start_date = date(int(starte_date_split[0]),int(starte_date_split[1]),int(starte_date_split[2]))
         best_package = packages.get_forecasting_companies(filtered_companies, input_year-1, datetime_start_date)

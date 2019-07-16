@@ -77,7 +77,7 @@ def full_controll():
 class ForecastForm(FlaskForm):
     timeframe_buy = IntegerField("Kaufzeitraum", default=60)
     timeframe_sell = IntegerField("Verkaufszeitraum", default=10)
-    start_date = IntegerField("Start Termin", default="2019-20-07")
+    start_date = StringField("Start Termin", default="2019-07-20")
     average_threshold = IntegerField(
         "Threshold Hoher Durchschnitt", default=10)
     average_strikes = IntegerField("Strikes", default=1)
@@ -108,9 +108,9 @@ class ForecastForm(FlaskForm):
 
 @app.route("/forecast", methods=["GET","POST"])
 def forecast():
-    form = ForecastForm
+    form = ForecastForm()
     if request.method == "POST":
         form_data = form.data
         forecast_package = forecasting.webcall(form_data)
         return render_template("forecast_results.html", package=forecast_package)
-    return render_template("forecast.html", form=ForecastForm)
+    return render_template("forecast.html", form=form )
