@@ -14,6 +14,8 @@ def realtime_ticker():
         print(time.ctime(int(realtime_data["timestamp"])))
         print(realtime_data)
 
-while True:
-    realtime_ticker()
-    time.sleep(60)
+#while True:
+#    realtime_ticker()
+#    time.sleep(60)
+
+print(time.ctime(1563364860))

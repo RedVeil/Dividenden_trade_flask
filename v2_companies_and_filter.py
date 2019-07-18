@@ -222,7 +222,7 @@ def calc_indicator(year, companies, form_data):
 
 def filter_company(year, years, company, key):
     try:
-        if company.strikes[year] < 1: #10
+        if company.strikes[year] < 10: #10
             return False
     except KeyError:
         return False
@@ -230,9 +230,9 @@ def filter_company(year, years, company, key):
         return False
     if company.dividends[year]["percent"] > 30:
         return False
-    if company.bad_trades[year] > 90: #50
+    if company.bad_trades[year] > 50: #50
         return False
-    if company.severe_trades[year] > 90: #10
+    if company.severe_trades[year] > 10: #10
         return False
     if company.average_returns[year] < 2:
         return False
