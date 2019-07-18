@@ -15,6 +15,8 @@ def create_packages(ranking):
                 pass
             if i["sell_date"] > package[-1]["buy_date"] and i["sell_date"] <= package[-1]["sell_date"]:
                 pass
+            if i["buy_date"] == package[-1]["buy_date"] and i["sell_date"] == package[-1]["sell_date"]:
+                pass
             if i["buy_date"] >= package[-1]["sell_date"]:
                 package.append(i)
                 points += i["points"]
@@ -27,6 +29,7 @@ def create_packages(ranking):
 
 
 def get_companies(companies, year, last_date="0"):
+    print(len(companies))
     to_sort = []
     for key in companies.keys():
         if companies[key].trades[year].buy_date > last_date:

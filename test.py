@@ -10,12 +10,8 @@ def get_us_ticker():
     for i in us_ticker:
         ticker.append(i[0])
     print(ticker)
-
-x = "2019/04/02"
-
-y=x.split("/")
-v = date(int(y[0]),int(y[1]),int(y[2]))
-print(v)
-
-blub = v - timedelta(days=-32)
-print(blub)
+x = 3.52-3.26
+y = 3.61-3.23
+x1 = x/3.26
+y1 = y/3.23
+print((x1+y1)/2)

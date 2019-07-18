@@ -133,20 +133,20 @@ class Company:
         else:
             self.great_trades[year] = round((great_trades/length_counter)*100,2)
 
-    def calc_strikes(self, year, form_data):
+    def calc_strikes(self, year):
         strikes = 0
-        if self.average_returns[year] < form_data["average_threshold"]:
-            strikes += form_data["average_strikes"]
-        if self.median_returns[year] < form_data["median_threshold"]:
-            strikes += form_data["median_strikes"]
-        if self.bad_trades[year] > form_data["bad_trades_threshold"]:
-            strikes += form_data["bad_trades_strikes"]
-        if self.bad_trades[year] > form_data["bad_trades2_threshold"]:
-            strikes += form_data["bad_trades2_strikes"]
-        if self.severe_trades[year] > form_data["severe_trades_threshold"]:
-            strikes += form_data["severe_trades_strikes"]
-        if self.great_trades[year] < form_data["great_trades_threshold"]:
-            strikes += form_data["great_trades_strikes"]
+        if self.average_returns[year] < 2:
+            strikes += 1
+        if self.median_returns[year] < 2:
+            strikes += 1
+        if self.bad_trades[year] > 10:
+            strikes += 2
+        if self.bad_trades[year] > 20:
+            strikes += 4
+        if self.severe_trades[year] > 10:
+            strikes += 5
+        if self.great_trades[year] < 5:
+            strikes += 1
         self.strikes[year] = strikes
 
     def add_ranking_points(self, year, points):
@@ -159,8 +159,8 @@ class Companies:
     def add_company(self, ID, company):
         self.companies[ID] = company
 
-    def fill_companies(self,year, db_connection, db_cursor, company_infos, timeframe_buy, timeframe_sell, form_data):
-        db_cursor.execute(f"SELECT * FROM 'dividends_{year}'")
+    def fill_companies(self,year, db_connection, db_cursor, company_infos, timeframe_buy, timeframe_sell):
+        db_cursor.execute(f"SELECT * FROM 'dividends_{year}' WHERE Company_ID=1")
         dividends_data = db_cursor.fetchall()
         for row in dividends_data:
             if row[1] < 2410:
@@ -172,7 +172,7 @@ class Companies:
                         self.companies[ID].calc_average(year)
                         self.companies[ID].calc_median(year)
                         self.companies[ID].assess_trades(year)
-                        self.companies[ID].calc_strikes(year, form_data)
+                        self.companies[ID].calc_strikes(year)
                 else:
                     new_company = Company(company_infos[row[1]]["ticker"],company_infos[row[1]]["name"],row[1])
                     self.add_company(ID, new_company)
@@ -181,10 +181,10 @@ class Companies:
                         self.companies[ID].calc_average(year)
                         self.companies[ID].calc_median(year)
                         self.companies[ID].assess_trades(year)
-                        self.companies[ID].calc_strikes(year, form_data)
+                        self.companies[ID].calc_strikes(year)
 
 
-def calc_indicator(year, companies, form_data):
+def calc_indicator(year, companies):
     averages_rank = []
     medians_rank = []
     bad_trades_rank = []
@@ -209,51 +209,39 @@ def calc_indicator(year, companies, form_data):
         points = 0
         for n in range(len(averages_rank)):
             if key in averages_rank[n]:
-                points += n * (form_data["averages_multiplier"]/100)
+                points += n * (100/100)
             if key in medians_rank[n]:
-                points += n * (form_data["medians_multiplier"]/100)
+                points += n * (100/100)
             if key in bad_trades_rank[n]:
-                points += n * (form_data["bad_trades_multiplier"]/100)
+                points += n * (100/100)
             if key in severe_trades_rank[n]:
-                points += n * (form_data["severe_trades_multiplier"]/100)
+                points += n * (100/100)
             if key in great_trades_rank[n]:
-                points += n * (form_data["great_trades_multiplier"]/100)
+                points += n * (100/100)
         companies[key].add_ranking_points(year, points)
 
 def filter_company(year, years, company, key):
-    print(key)
     try:
-        if company.strikes[year] > 10: #10
-            print(company.strikes[year])
-            print("Strikes")
+        if company.strikes[year] < 10: #10
             return False
     except KeyError:
-        print("KeyError")
         return False
     if year not in company.trades.keys():
-        print("year not in trades")
         return False
-    if company.dividends[year]["percent"] > 10:
-        print("dividend to high")
+    if company.dividends[year]["percent"] > 30:
         return False
     if company.bad_trades[year] > 50: #50
-        print(f"bad Trades: {company.bad_trades}")
         return False
     if company.severe_trades[year] > 10: #10
-        print(f"severe Trades: {company.severe_trades}")
         return False
     if company.average_returns[year] < 2:
-        print(f"average return: {company.average_returns[year]}")
         return False
     if company.median_returns[year] < 0:
-        print(f"median return: {company.median_returns[year]}")
         return False
     if company.trades[year].buy_date == None:
-        print("No buy date")
         return False
     if year != years[0]:
         if year-1 not in company.trades.keys() or year-1 not in company.ranking_points.keys():
-            print("year and previous year not in keys")
             return False
         else:
             return True
@@ -261,50 +249,58 @@ def filter_company(year, years, company, key):
         return True
 
 
-def webcall(form_data):
+def webcall():
     total_years = [2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
                    2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018]
-    years = total_years[total_years.index(int(form_data["start_year"]))-1:total_years.index(int(form_data["end_year"]))]
-    timeframe_buy = form_data["timeframe_buy"]
-    timeframe_sell = form_data["timeframe_sell"]
+    years = total_years[8:10]
+    timeframe_buy = 10
+    timeframe_sell = 5
     timeframe = f"{timeframe_buy}-{timeframe_sell}"
     print(timeframe)
-    db_connection = sqlite3.connect('./databases/div_trade_v9b.db')
+    db_connection = sqlite3.connect('./databases/div_trade_v9.db')
     db_cursor = db_connection.cursor()
-    db_cursor.execute(f"SELECT * FROM '01_Companies'")
+    db_cursor.execute(f"SELECT * FROM '01_Companies' WHERE Ticker = '2FI'")
     db_company_infos = db_cursor.fetchall()
     company_infos = {}
     for row in db_company_infos:
         if row[3] != "US":
+            print(row[1], row[3], row[4], row[2])
             company_infos[row[0]] = {"name":row[1],"exchange":row[3],"currency":row[4],"ticker":row[2]}
     all_companies = Companies()
     filtered_companies = {}
     last_date = ""
-    amount_high = form_data["start_amount"]
-    amount_low = form_data["start_amount"]
     tax_credit_high = 0
     tax_credit_low = 0
     backtest_breackdowns = {}
     for year in years:
         print(year)
-        all_companies.fill_companies(year, db_connection, db_cursor, company_infos, timeframe_buy, timeframe_sell, form_data)
+        all_companies.fill_companies(year, db_connection, db_cursor, company_infos, timeframe_buy, timeframe_sell)
+        print(all_companies.companies["2FI-0"].ticker)
+        print(all_companies.companies["2FI-0"].name)
+        print(all_companies.companies["2FI-0"].id)
+        print(all_companies.companies["2FI-0"].trades[year].buy_date,all_companies.companies["2FI-0"].trades[year].sell_date,all_companies.companies["2FI-0"].trades[year].buy_high,all_companies.companies["2FI-0"].trades[year].buy_low,all_companies.companies["2FI-0"].trades[year].sell_high,all_companies.companies["2FI-0"].trades[year].sell_low)
+        print(all_companies.companies["2FI-0"].dividends[year])
+        print(all_companies.companies["2FI-0"].trends200[year])
+        print(all_companies.companies["2FI-0"].average_returns[year])
+        print(all_companies.companies["2FI-0"].median_returns[year])
+        print(all_companies.companies["2FI-0"].bad_trades[year])
+        print(all_companies.companies["2FI-0"].severe_trades[year])
+        print(all_companies.companies["2FI-0"].great_trades[year])
+        print(all_companies.companies["2FI-0"].strikes[year])
         for key in all_companies.companies.keys():
             if filter_company(year, years, all_companies.companies[key], key):
                 filtered_companies[key] = (all_companies.companies[key])
-        print("calc_indicator")       
-        calc_indicator(year, filtered_companies, form_data)
-        if year == years[1]:
-            print("create first package")
+        calc_indicator(year, filtered_companies)
+        print(all_companies.companies["2FI-0"].ranking_points[year])
+        """if year == years[1]:
             best_package = packages.get_companies(filtered_companies, year)
-            print("create first backtest")
             last_date, amount_high, amount_low, tax_credit_high, tax_credit_low, backtest_breackdown = backtest.backtesting(timeframe, best_package, amount_high, amount_low, tax_credit_high, tax_credit_low)
             backtest_breackdowns[year] = backtest_breackdown
         if year > years[1]:
-            print("create package")
             best_package = packages.get_companies(filtered_companies, year, last_date)
-            print("create backtest")
             last_date, amount_high, amount_low, tax_credit_high, tax_credit_low, backtest_breackdown = backtest.backtesting(
                 timeframe, best_package, amount_high, amount_low, tax_credit_high, tax_credit_low)
             backtest_breackdowns[year] = backtest_breackdown
         filtered_companies = {}
-    return backtest_breackdowns
+    return backtest_breackdowns"""
+webcall()

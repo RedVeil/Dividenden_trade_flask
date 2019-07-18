@@ -162,7 +162,7 @@ class Company:
 
 
 def write_dividends_to_db(name, dividends):
-    db_connection = sqlite3.connect('databases/div_trade_v9_us.db')
+    db_connection = sqlite3.connect('databases/div_trade_v9c.db')
     db_cursor = db_connection.cursor()
     db_cursor.execute(f"SELECT ID FROM '01_Companies' WHERE Name = '{name}'")
     company_id = db_cursor.fetchone()
@@ -179,7 +179,7 @@ def write_dividends_to_db(name, dividends):
     print(f"{name} dividends added")
 
 def write_historic_data_to_db(ticker, days):
-    db_connection = sqlite3.connect('databases/div_trade_v9_us.db')
+    db_connection = sqlite3.connect('databases/div_trade_v9c.db')
     db_cursor = db_connection.cursor()
     try:
         db_cursor.execute(f"""CREATE TABLE "{ticker}" 
@@ -198,15 +198,15 @@ def write_historic_data_to_db(ticker, days):
     db_cursor.close()
     print(f"{ticker} table added")
 
-def write_company_to_db(name, ticker, exchange, currency):
-        db_connection = sqlite3.connect('databases/div_trade_v9_us.db')
+def write_company_to_db(name, ticker, currency):
+        db_connection = sqlite3.connect('databases/div_trade_v9c.db')
         db_cursor = db_connection.cursor()
         db_cursor.execute(
             f"SELECT Name FROM '01_Companies' WHERE Name = '{name}'")
         company = db_cursor.fetchone()
         if not company:
             db_cursor.execute(
-                f"INSERT INTO '01_Companies' (Name, Ticker, Exchange, Currency) VALUES ('{name}', '{ticker}', '{exchange}','{currency}')")
+                f"INSERT INTO '01_Companies' (Name, Ticker, Currency) VALUES ('{name}', '{ticker}','{currency}')")
         db_connection.commit()
         db_cursor.close()
         print(f"{ticker} added to companies")
@@ -269,11 +269,10 @@ def get_eod_data(eod_ticker, api_token):
     return historic_data, dividend_data
 
 def get_ticker(api_token):
-    exchange_codes={"US":"US",} #done: ("GER":"XETRA","LUX":"LU","DEN":"CO","AT":"VI","SP":"MC","FR":"PA","CHF":"VX","CA":"TO", "IT":"MI","SWE":"ST","NOR":"OL","UK":"LSE", ) /to_do:
+    exchange_codes={"GER":"XETRA"} #done: () /to_do: "US":"US","LUX":"LU","DEN":"CO","AT":"VI","SP":"MC","FR":"PA","CHF":"VX","CA":"TO", "IT":"MI","SWE":"ST","NOR":"OL","UK":"LSE",
     session = requests.Session()
     params = {"api_token": api_token}
     companies = {}
-    counter = 0
     for key in exchange_codes.keys():
         print(f"geting ticker from {exchange_codes[key]}")
         url_exchange= f"https://eodhistoricaldata.com/api/exchanges/{exchange_codes[key]}?api_token={api_token}&fmt=json"
@@ -282,22 +281,26 @@ def get_ticker(api_token):
             print("status ok")
             exchange_data = json.loads(reponse_exchange.text)
             for item in exchange_data:
-                if item["Type"] == "Common Stock" and item["Code"] not in companies.keys():
-                    currency = item["Currency"]
-                    if currency == "GBX":
-                        currency = "GBP"
-                    exchange = item["Exchange"]
-                    if currency == "USD":
-                        exchange = "US"
+
+                currency = item["Currency"]
+                if currency == "GBX":
+                    currency = "GBP"
+
+                exchange = item["Exchange"]
+                if currency == "USD":
+                    exchange = "US"
+
+                db_ticker = item["Code"]
+                ticker = f"{db_ticker}.{exchange}"
+
+                if item["Type"] == "Common Stock" and ticker not in companies.keys():
                     name = item["Name"]
                     if name != None:
                         if "'" in name:
                             name = name.replace("'", "")
-                        company = Company(name, item["Code"], exchange, currency)
-                        companies[item["Code"]] = company
-                        counter +=1
-                        if counter == 2000:
-                            return companies
+                        company = Company(name, ticker, exchange, currency)
+                        companies[ticker] = company
+    return companies
 
 
 if __name__ == "__main__":
@@ -311,8 +314,7 @@ if __name__ == "__main__":
             print(key)
         if key not in bans:
             company=companies[key]
-            eod_ticker = f"{company.ticker}.{company.exchange}"
-            historic_data, dividend_data = get_eod_data(eod_ticker, api_token)
+            historic_data, dividend_data = get_eod_data(key, api_token)
             if initial_filter(historic_data, dividend_data, company):
                 print(company.name, company.currency, company.exchange)
                 company.currency_conversion(historic_data, dividend_data)
@@ -321,7 +323,7 @@ if __name__ == "__main__":
                     for n in range(len(company.dividends[year])):
                         company.calculate_dividend_percentage(year, n)
 
-                write_company_to_db(company.name, company.ticker, company.exchange, company.currency)
+                write_company_to_db(company.name, company.ticker, company.currency)
                 write_historic_data_to_db(company.ticker, company.days)
                 write_dividends_to_db(company.name, company.dividends)
 

@@ -19,9 +19,9 @@ class ExpertForm(FlaskForm):
     end_year = IntegerField("End Jahr", default=2018)
     start_amount = IntegerField("Start Kapital", default=1000)
     average_threshold = IntegerField(
-        "Threshold Hoher Durchschnitt", default=10)
+        "Threshold Hoher Durchschnitt", default=2)
     average_strikes = IntegerField("Strikes", default=1)
-    median_threshold = IntegerField("Threshold Hoher Median", default=10)
+    median_threshold = IntegerField("Threshold Hoher Median", default=2)
     median_strikes = IntegerField("Strikes", default=1)
     bad_trades_threshold = IntegerField(
         "Threshold Negativer Trades", default=10)
@@ -33,7 +33,7 @@ class ExpertForm(FlaskForm):
         "Threshold Trades unter -10%", default=10)
     severe_trades_strikes = IntegerField("Strikes", default=4)
     great_trades_threshold = IntegerField(
-        "Threshold Trades ueber 10%", default=6)
+        "Threshold Trades ueber 10%", default=5)
     great_trades_strikes = IntegerField("Strikes", default=1)
     averages_multiplier = IntegerField("Multiplier Durschnitt", default=100)
     medians_multiplier = IntegerField("Multiplier Median", default=100)
@@ -76,10 +76,10 @@ def full_controll():
 
 class ForecastForm(FlaskForm):
     timeframe_buy = IntegerField("Kaufzeitraum", default=60)
-    timeframe_sell = IntegerField("Verkaufszeitraum", default=10)
+    timeframe_sell = IntegerField("Verkaufszeitraum", default=2)
     start_date = StringField("Start Termin", default="2019-07-20")
     average_threshold = IntegerField(
-        "Threshold Hoher Durchschnitt", default=10)
+        "Threshold Hoher Durchschnitt", default=2)
     average_strikes = IntegerField("Strikes", default=1)
     median_threshold = IntegerField("Threshold Hoher Median", default=10)
     median_strikes = IntegerField("Strikes", default=1)
