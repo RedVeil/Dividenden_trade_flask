@@ -264,19 +264,22 @@ def filter_company(year, years, company, key):
 def webcall(form_data):
     total_years = [2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
                    2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018]
-    years = total_years[total_years.index(int(form_data["start_year"]))-1:total_years.index(int(form_data["end_year"]))]
-    timeframe_buy = form_data["timeframe_buy"]
-    timeframe_sell = form_data["timeframe_sell"]
+    start_year = form_data["trade_years"][form_data["trade_years"].index(";"):]
+    end_year = form_data["trade_years"][:form_data["trade_years"].index(";")]
+    years = total_years[total_years.index(int(start_year))-1:total_years.index(int(end_year))]
+    input_timeframe = form_data["timeframe"]
+    timeframe_buy = form_data["timeframe"][:form_data["timeframe"].index(";")]
+    timeframe_sell = form_data["timeframe"][form_data["timeframe"].index(";"):]
     timeframe = f"{timeframe_buy}-{timeframe_sell}"
     print(timeframe)
-    db_connection = sqlite3.connect('./databases/div_trade_v9b.db')
+    db_connection = sqlite3.connect('./databases/div_trade_v9c.db')
     db_cursor = db_connection.cursor()
     db_cursor.execute(f"SELECT * FROM '01_Companies'")
     db_company_infos = db_cursor.fetchall()
     company_infos = {}
     for row in db_company_infos:
         if row[3] != "US":
-            company_infos[row[0]] = {"name":row[1],"exchange":row[3],"currency":row[4],"ticker":row[2]}
+            company_infos[row[0]] = {"name":row[1],"currency":row[3],"ticker":row[2]}
     all_companies = Companies()
     filtered_companies = {}
     last_date = ""
