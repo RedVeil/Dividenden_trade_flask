@@ -43,7 +43,7 @@ def full_controll():
         return render_template('results.html', labels=total_buy_dates, values_high=graph_high,
         values_medium=graph_average, values_low=graph_low ,
         total_trades=total_trades, breakdowns=breakdowns, timeframe_buy = form_data["timeframe_buy"], timeframe_sell= form_data["timeframe_sell"])
-    return render_template("dashforge/template/index.html")
+    return render_template("index.html")
 
 class ForecastForm(FlaskForm):
     timeframe_buy = IntegerField("Kaufzeitraum", default=60)
