@@ -312,6 +312,7 @@ def webcall(form_data):
     all_companies = Companies()
     filtered_companies = {}
     last_date = ""
+    safety_margin = (100-float(form_data["safety_margin"]))/100
     amount_high = int(form_data["start_amount"])
     amount_low = int(form_data["start_amount"])
     tax_credit_high = 0
@@ -329,7 +330,7 @@ def webcall(form_data):
             print("create first package")
             best_package = packages.get_companies(filtered_companies, year)
             print("create first backtest")
-            last_date, amount_high, amount_low, tax_credit_high, tax_credit_low, backtest_breackdown = backtest.backtesting(timeframe, best_package, amount_high, amount_low, tax_credit_high, tax_credit_low)
+            last_date, amount_high, amount_low, tax_credit_high, tax_credit_low, backtest_breackdown = backtest.backtesting(timeframe, best_package, amount_high, amount_low, tax_credit_high, tax_credit_low, safety_margin)
             formated_breackdown = format_backtest(backtest_breackdown)
             backtest_breackdowns[year] = formated_breackdown
         if year > years[1]:
@@ -337,7 +338,7 @@ def webcall(form_data):
             best_package = packages.get_companies(filtered_companies, year, last_date)
             print("create backtest")
             last_date, amount_high, amount_low, tax_credit_high, tax_credit_low, backtest_breackdown = backtest.backtesting(
-                timeframe, best_package, amount_high, amount_low, tax_credit_high, tax_credit_low)
+                timeframe, best_package, amount_high, amount_low, tax_credit_high, tax_credit_low, safety_margin)
             formated_breackdown = format_backtest(backtest_breackdown)
             backtest_breackdowns[year] = backtest_breackdown
         filtered_companies = {}

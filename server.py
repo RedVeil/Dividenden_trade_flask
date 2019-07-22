@@ -21,6 +21,7 @@ def test():
 def full_controll():
     if request.method == "POST":
         form_data = request.form
+        print(form_data)
         backtest_breakdowns = companies_and_filter.webcall(
             form_data)
         graph_high = []
@@ -33,24 +34,24 @@ def full_controll():
             for backtest in backtest_breakdowns[year]:
                 high = backtest.return_minus_taxes_high
                 low = backtest.return_minus_taxes_low
+                graph_high.append(high)
+                graph_low.append(low)
                 high = high.replace(".", "")
                 high = high.replace(",",".")
                 low = low.replace(".","")
                 low = low.replace(",", ".")
                 high = float(high)
                 low = float(low)
-                print(high,low)
-                print(type(high), type(low))
                 average = round((high+low)/2,2)
-                graph_high.append(high)
-                graph_low.append(low)
                 graph_average.append(average)
                 total_trades.append([backtest.buy_date, backtest.sell_date,backtest.ticker,backtest.name,backtest.buy_high,backtest.buy_low,backtest.sell_high,backtest.sell_low])
                 total_buy_dates.append(backtest.buy_date)
                 breakdowns.append(backtest)
+                max_return = max(high)
+                step_size = int(max_return/20)
         return render_template('results.html', labels=total_buy_dates, values_high=graph_high,
         values_medium=graph_average, values_low=graph_low ,
-        total_trades=total_trades, breakdowns=breakdowns, timeframe_buy = form_data["timeframe"])
+        total_trades=total_trades, breakdowns=breakdowns, timeframe_buy = form_data["timeframe"], step_size=step_size, max_return=max_return)
     return render_template("index.html")
 
 @app.route("/forecast", methods=["GET","POST"])
