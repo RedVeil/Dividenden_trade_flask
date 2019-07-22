@@ -1,6 +1,9 @@
 import sqlite3
+import locale
 import v2_packages as packages
 import v2_backtest as backtest
+
+locale.setlocale(locale.LC_ALL, 'de_DE.utf8')
 
 class Trade:
     def __init__(self, buy_date, sell_date, buy_high, buy_low, sell_high,sell_low):
@@ -135,18 +138,18 @@ class Company:
 
     def calc_strikes(self, year, form_data):
         strikes = 0
-        if self.average_returns[year] < form_data["average_threshold"]:
-            strikes += form_data["average_strikes"]
-        if self.median_returns[year] < form_data["median_threshold"]:
-            strikes += form_data["median_strikes"]
-        if self.bad_trades[year] > form_data["bad_trades_threshold"]:
-            strikes += form_data["bad_trades_strikes"]
-        if self.bad_trades[year] > form_data["bad_trades2_threshold"]:
-            strikes += form_data["bad_trades2_strikes"]
-        if self.severe_trades[year] > form_data["severe_trades_threshold"]:
-            strikes += form_data["severe_trades_strikes"]
-        if self.great_trades[year] < form_data["great_trades_threshold"]:
-            strikes += form_data["great_trades_strikes"]
+        if self.average_returns[year] < int(form_data["average_threshold"]):
+            strikes += int(form_data["average_strikes"])
+        if self.median_returns[year] < int(form_data["median_threshold"]):
+            strikes += int(form_data["median_strikes"])
+        if self.bad_trades[year] > int(form_data["bad_trades_threshold"]):
+            strikes += int(form_data["bad_trades_strikes"])
+        if self.bad_trades[year] > int(form_data["bad_trades2_threshold"]):
+            strikes += int(form_data["bad_trades2_strikes"])
+        if self.severe_trades[year] > int(form_data["severe_trades_threshold"]):
+            strikes += int(form_data["severe_trades_strikes"])
+        if self.great_trades[year] < int(form_data["great_trades_threshold"]):
+            strikes += int(form_data["great_trades_strikes"])
         self.strikes[year] = strikes
 
     def add_ranking_points(self, year, points):
@@ -183,6 +186,32 @@ class Companies:
                         self.companies[ID].assess_trades(year)
                         self.companies[ID].calc_strikes(year, form_data)
 
+def format_backtest(breakdowns):
+    for breakdown in breakdowns:
+        breakdown.working_capital_high = '{0:n}'.format(breakdown.working_capital_high)
+        breakdown.working_capital_low = '{0:n}'.format(breakdown.working_capital_low)
+        breakdown.working_capital_high_minus_fees = '{0:n}'.format(breakdown.working_capital_high_minus_fees)
+        breakdown.working_capital_low_minus_fees = '{0:n}'.format(breakdown.working_capital_low_minus_fees)
+        breakdown.buy_high = '{0:n}'.format(breakdown.buy_high)
+        breakdown.buy_low = '{0:n}'.format(breakdown.buy_low)
+        breakdown.sell_high = '{0:n}'.format(breakdown.sell_high)
+        breakdown.sell_low = '{0:n}'.format(breakdown.sell_low)
+        breakdown.dividend = '{0:n}'.format(breakdown.dividend)
+        breakdown.return_high = '{0:n}'.format(breakdown.return_high)
+        breakdown.return_low = '{0:n}'.format(breakdown.return_low)
+        breakdown.return_high_minus_fees = '{0:n}'.format(breakdown.return_high_minus_fees)
+        breakdown.return_low_minus_fees = '{0:n}'.format(breakdown.return_low_minus_fees)
+        breakdown.tax_credit_high = '{0:n}'.format(breakdown.tax_credit_high)
+        breakdown.tax_credit_low = '{0:n}'.format(breakdown.tax_credit_low)
+        breakdown.taxes_high = '{0:n}'.format(breakdown.taxes_high)
+        breakdown.taxes_low = '{0:n}'.format(breakdown.taxes_low)
+        breakdown.return_minus_taxes_high = '{0:n}'.format(breakdown.return_minus_taxes_high)
+        breakdown.return_minus_taxes_low = '{0:n}'.format(breakdown.return_minus_taxes_low)
+        breakdown.unused_high = '{0:n}'.format(breakdown.unused_high)
+        breakdown.unused_low = '{0:n}'.format(breakdown.unused_low)
+        breakdown.return_final_high = '{0:n}'.format(breakdown.return_final_high)
+        breakdown.return_final_low = '{0:n}'.format(breakdown.return_final_low)
+    return breakdowns
 
 def calc_indicator(year, companies, form_data):
     averages_rank = []
@@ -209,15 +238,15 @@ def calc_indicator(year, companies, form_data):
         points = 0
         for n in range(len(averages_rank)):
             if key in averages_rank[n]:
-                points += n * (form_data["averages_multiplier"]/100)
+                points += n * (int(form_data["averages_multiplier"])/100)
             if key in medians_rank[n]:
-                points += n * (form_data["medians_multiplier"]/100)
+                points += n * (int(form_data["medians_multiplier"])/100)
             if key in bad_trades_rank[n]:
-                points += n * (form_data["bad_trades_multiplier"]/100)
+                points += n * (int(form_data["bad_trades_multiplier"])/100)
             if key in severe_trades_rank[n]:
-                points += n * (form_data["severe_trades_multiplier"]/100)
+                points += n * (int(form_data["severe_trades_multiplier"])/100)
             if key in great_trades_rank[n]:
-                points += n * (form_data["great_trades_multiplier"]/100)
+                points += n * (int(form_data["great_trades_multiplier"])/100)
         companies[key].add_ranking_points(year, points)
 
 def filter_company(year, years, company, key):
@@ -264,12 +293,12 @@ def filter_company(year, years, company, key):
 def webcall(form_data):
     total_years = [2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
                    2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018]
-    start_year = form_data["trade_years"][form_data["trade_years"].index(";"):]
-    end_year = form_data["trade_years"][:form_data["trade_years"].index(";")]
+    end_year = int(form_data["trade_years"][form_data["trade_years"].index(";")+1:])
+    start_year = int(form_data["trade_years"][:form_data["trade_years"].index(";")])
+    print(start_year, end_year)
     years = total_years[total_years.index(int(start_year))-1:total_years.index(int(end_year))]
-    input_timeframe = form_data["timeframe"]
-    timeframe_buy = form_data["timeframe"][:form_data["timeframe"].index(";")]
-    timeframe_sell = form_data["timeframe"][form_data["timeframe"].index(";"):]
+    timeframe_buy = int(form_data["timeframe"][:form_data["timeframe"].index(";")])*-1
+    timeframe_sell = int(form_data["timeframe"][form_data["timeframe"].index(";")+1:])
     timeframe = f"{timeframe_buy}-{timeframe_sell}"
     print(timeframe)
     db_connection = sqlite3.connect('./databases/div_trade_v9c.db')
@@ -283,8 +312,8 @@ def webcall(form_data):
     all_companies = Companies()
     filtered_companies = {}
     last_date = ""
-    amount_high = form_data["start_amount"]
-    amount_low = form_data["start_amount"]
+    amount_high = int(form_data["start_amount"])
+    amount_low = int(form_data["start_amount"])
     tax_credit_high = 0
     tax_credit_low = 0
     backtest_breackdowns = {}
@@ -301,13 +330,15 @@ def webcall(form_data):
             best_package = packages.get_companies(filtered_companies, year)
             print("create first backtest")
             last_date, amount_high, amount_low, tax_credit_high, tax_credit_low, backtest_breackdown = backtest.backtesting(timeframe, best_package, amount_high, amount_low, tax_credit_high, tax_credit_low)
-            backtest_breackdowns[year] = backtest_breackdown
+            formated_breackdown = format_backtest(backtest_breackdown)
+            backtest_breackdowns[year] = formated_breackdown
         if year > years[1]:
             print("create package")
             best_package = packages.get_companies(filtered_companies, year, last_date)
             print("create backtest")
             last_date, amount_high, amount_low, tax_credit_high, tax_credit_low, backtest_breackdown = backtest.backtesting(
                 timeframe, best_package, amount_high, amount_low, tax_credit_high, tax_credit_low)
+            formated_breackdown = format_backtest(backtest_breackdown)
             backtest_breackdowns[year] = backtest_breackdown
         filtered_companies = {}
     return backtest_breackdowns

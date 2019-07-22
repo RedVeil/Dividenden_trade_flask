@@ -33,6 +33,14 @@ def full_controll():
             for backtest in backtest_breakdowns[year]:
                 high = backtest.return_minus_taxes_high
                 low = backtest.return_minus_taxes_low
+                high = high.replace(".", "")
+                high = high.replace(",",".")
+                low = low.replace(".","")
+                low = low.replace(",", ".")
+                high = float(high)
+                low = float(low)
+                print(high,low)
+                print(type(high), type(low))
                 average = round((high+low)/2,2)
                 graph_high.append(high)
                 graph_low.append(low)
@@ -42,40 +50,8 @@ def full_controll():
                 breakdowns.append(backtest)
         return render_template('results.html', labels=total_buy_dates, values_high=graph_high,
         values_medium=graph_average, values_low=graph_low ,
-        total_trades=total_trades, breakdowns=breakdowns, timeframe_buy = form_data["timeframe_buy"], timeframe_sell= form_data["timeframe_sell"])
+        total_trades=total_trades, breakdowns=breakdowns, timeframe_buy = form_data["timeframe"])
     return render_template("index.html")
-
-class ForecastForm(FlaskForm):
-    timeframe_buy = IntegerField("Kaufzeitraum", default=60)
-    timeframe_sell = IntegerField("Verkaufszeitraum", default=2)
-    start_date = StringField("Start Termin", default="2019-07-20")
-    average_threshold = IntegerField(
-        "Threshold Hoher Durchschnitt", default=2)
-    average_strikes = IntegerField("Strikes", default=1)
-    median_threshold = IntegerField("Threshold Hoher Median", default=10)
-    median_strikes = IntegerField("Strikes", default=1)
-    bad_trades_threshold = IntegerField(
-        "Threshold Negativer Trades", default=10)
-    bad_trades_strikes = IntegerField("Strikes", default=2)
-    bad_trades2_threshold = IntegerField(
-        "Threshold2 Negativer Trades", default=20)
-    bad_trades2_strikes = IntegerField("Strikes", default=4)
-    severe_trades_threshold = IntegerField(
-        "Threshold Trades unter -10%", default=10)
-    severe_trades_strikes = IntegerField("Strikes", default=4)
-    great_trades_threshold = IntegerField(
-        "Threshold Trades ueber 10%", default=6)
-    great_trades_strikes = IntegerField("Strikes", default=1)
-    averages_multiplier = IntegerField("Multiplier Durschnitt", default=100)
-    medians_multiplier = IntegerField("Multiplier Median", default=100)
-    bad_trades_multiplier = IntegerField(
-        "Multiplier Negative Trades", default=100)
-    severe_trades_multiplier = IntegerField(
-        "Multiplier Trades unter -10%", default=100)
-    great_trades_multiplier = IntegerField(
-        "Multiplier Trades ueber 10%", default=100)
-    submit = SubmitField()
-
 
 @app.route("/forecast", methods=["GET","POST"])
 def forecast():
