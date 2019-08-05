@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js'></script>
+  <link href='http://dividendentrade.cine-solutions.digital/template/dashforge/assets/css/dashforge.css' rel="stylesheet">
+<style>
+th { font-weight:700 !important; }
+</style>
+</head>
+
+<body>
+    <center>
+    <br>
+    <h2 class="mb-3 mt-3">Forecast</h2>
+    <table class="table table-bordered table-striped" id="history_low" style="width:100%">
+        <tr>
+        <th>Kaufdatum</th>
+        <th>Hauptversammlung</th>
+        <th>Verkaufsdatum</th>
+        <th>Ticker</th> 
+        <th>Name</th>  
+        <th>Indikator-Punkte</th>       
+        </tr>
+        {% for trade in package %}
+        <tr>
+        <td>{{trade["buy_date"]}}</td>
+        <td>{{trade["forecast_date"]}}</td>
+        <td>{{trade["sell_date"]}}</td>
+        <td>{{trade["ticker"]}}</td>
+        <td>{{trade["name"]}}</td>
+        <td>{{trade["points"]}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+  </center>
+</body>
+
+</html>
