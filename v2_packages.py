@@ -23,7 +23,7 @@ def create_packages(ranking):
             if i["sell_date"] <= package[0]["buy_date"]:
                 package.insert(0, i)
                 points += i["points"]
-        packages.append({"points":points,"package":package})
+        packages.append({"points":len(package),"package":package})  #"points":points
         counter +=1
     return packages
 
@@ -32,7 +32,7 @@ def get_companies(companies, year, last_date="0"):
     print(len(companies))
     to_sort = []
     for key in companies.keys():
-        if companies[key].trades[year].buy_date > last_date:
+        if companies[key].trades[year].buy_date > last_date and year-1 in companies[key].ranking_points.keys():
             to_sort.append({"buy_date":companies[key].trades[year].buy_date,"sell_date":companies[key].trades[year].sell_date, "points":companies[key].ranking_points[year-1], "trade":companies[key].trades[year], "name":companies[key].name, "ticker":companies[key].ticker, "dividend_amount":companies[key].dividends[year]["amount"]})
     ranking = sorted(to_sort, key=itemgetter("buy_date"))
     packages = create_packages(ranking)
@@ -43,7 +43,6 @@ def get_companies(companies, year, last_date="0"):
 def get_forecasting_companies(companies, year, start_date):
     print(len(companies))
     print(start_date)
-    print(year)
     to_sort = []
     for key in companies.keys():
         if companies[key].buy_date > start_date:

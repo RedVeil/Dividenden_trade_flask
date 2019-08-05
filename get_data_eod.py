@@ -2,6 +2,7 @@ import requests
 import csv
 import sqlite3
 import json
+import time
 
 
 class Day:
@@ -162,7 +163,7 @@ class Company:
 
 
 def write_dividends_to_db(name, dividends):
-    db_connection = sqlite3.connect('databases/div_trade_v9c.db')
+    db_connection = sqlite3.connect('databases/div_trade_v9c-SWE2.db')
     db_cursor = db_connection.cursor()
     db_cursor.execute(f"SELECT ID FROM '01_Companies' WHERE Name = '{name}'")
     company_id = db_cursor.fetchone()
@@ -179,7 +180,7 @@ def write_dividends_to_db(name, dividends):
     print(f"{name} dividends added")
 
 def write_historic_data_to_db(ticker, days):
-    db_connection = sqlite3.connect('databases/div_trade_v9c.db')
+    db_connection = sqlite3.connect('databases/div_trade_v9c-SWE2.db')
     db_cursor = db_connection.cursor()
     try:
         db_cursor.execute(f"""CREATE TABLE "{ticker}" 
@@ -199,17 +200,23 @@ def write_historic_data_to_db(ticker, days):
     print(f"{ticker} table added")
 
 def write_company_to_db(name, ticker, currency):
-        db_connection = sqlite3.connect('databases/div_trade_v9c.db')
-        db_cursor = db_connection.cursor()
+    print(ticker)
+    db_connection = sqlite3.connect('databases/div_trade_v9c-SWE2.db')
+    db_cursor = db_connection.cursor()
+    db_cursor.execute(
+        f"SELECT Name FROM '01_Companies' WHERE Name = '{name}'")
+    company = db_cursor.fetchone()
+    if not company:
         db_cursor.execute(
-            f"SELECT Name FROM '01_Companies' WHERE Name = '{name}'")
-        company = db_cursor.fetchone()
-        if not company:
-            db_cursor.execute(
-                f"INSERT INTO '01_Companies' (Name, Ticker, Currency) VALUES ('{name}', '{ticker}','{currency}')")
+            f"INSERT INTO '01_Companies' (Name, Ticker, Currency) VALUES ('{name}', '{ticker}','{currency}')")
         db_connection.commit()
         db_cursor.close()
         print(f"{ticker} added to companies")
+        return True
+    else:
+        print(company)
+        db_cursor.close()
+        return False
 
 def initial_filter(historic_data, dividend_data, company):
     if type(dividend_data) != dict:
@@ -227,6 +234,7 @@ def initial_filter(historic_data, dividend_data, company):
         return False
     except KeyError:
         print(dividend_data)
+        return False
     if company.currency == "USD" or company.currency == "CAD":
         if len(dividend_data.keys()) < 20:
             print("not enough dividends")
@@ -269,7 +277,7 @@ def get_eod_data(eod_ticker, api_token):
     return historic_data, dividend_data
 
 def get_ticker(api_token):
-    exchange_codes={"GER":"XETRA"} #done: () /to_do: "US":"US","LUX":"LU","DEN":"CO","AT":"VI","SP":"MC","FR":"PA","CHF":"VX","CA":"TO", "IT":"MI","SWE":"ST","NOR":"OL","UK":"LSE",
+    exchange_codes={"US":"US",} #done: ("SWE":"ST","AT":"VI","GER":"XETRA","DEN":"CO","CHF":"VX","NOR":"OL","FR":"PA","SP":"MC","IT":"MI","CA":"TO","UK":"LSE") /to_do: ,
     session = requests.Session()
     params = {"api_token": api_token}
     companies = {}
@@ -281,18 +289,14 @@ def get_ticker(api_token):
             print("status ok")
             exchange_data = json.loads(reponse_exchange.text)
             for item in exchange_data:
-
                 currency = item["Currency"]
                 if currency == "GBX":
                     currency = "GBP"
-
                 exchange = item["Exchange"]
                 if currency == "USD":
                     exchange = "US"
-
                 db_ticker = item["Code"]
                 ticker = f"{db_ticker}.{exchange}"
-
                 if item["Type"] == "Common Stock" and ticker not in companies.keys():
                     name = item["Name"]
                     if name != None:
@@ -302,30 +306,46 @@ def get_ticker(api_token):
                         companies[ticker] = company
     return companies
 
+def get_bans():
+    db_connection = sqlite3.connect('./databases/div_trade_v9c-SWE2.db')
+    db_cursor = db_connection.cursor()
+    db_cursor.execute(f"SELECT Ticker FROM '01_Companies' WHERE Currency = 'USD'")
+    db_ticker = db_cursor.fetchall()
+    bans = []
+    for ticker in db_ticker:
+        bans.append(ticker[0])
+    db_connection.close()
+    return bans
 
 if __name__ == "__main__":
     api_token = "5d19ac0dbbdd85.51123060"
     companies = get_ticker(api_token)
     print(len(companies))
+    #bans = get_bans()
     bans = []
     print(len(bans))
-    for key in companies.keys():
+    counter = 0
+    for key in companies.keys():   
+        counter +=1
         if key in bans:
-            print(key)
+            pass
         if key not in bans:
             company=companies[key]
             historic_data, dividend_data = get_eod_data(key, api_token)
+            #print(dividend_data)
             if initial_filter(historic_data, dividend_data, company):
-                print(company.name, company.currency, company.exchange)
                 company.currency_conversion(historic_data, dividend_data)
                 print("currency_conversion done")
                 for year in company.dividends.keys():
                     for n in range(len(company.dividends[year])):
                         company.calculate_dividend_percentage(year, n)
 
-                write_company_to_db(company.name, company.ticker, company.currency)
-                write_historic_data_to_db(company.ticker, company.days)
-                write_dividends_to_db(company.name, company.dividends)
+                if write_company_to_db(company.name, company.ticker, company.currency):
+                    write_historic_data_to_db(company.ticker, company.days)
+                    write_dividends_to_db(company.name, company.dividends)
+            if counter == 2000:
+                time.sleep(120)
+                counter = 0
 
                 
 
